@@ -44,3 +44,11 @@
   - L'agent a prouvé la disparition avec un list_loans sans include_archived, puis, après découverte de l'archivage, a quand même conclu à une mission réussie.
   - Sélection correcte : seuls les 6 emprunts rendus ont été traités, LN-5060 (en cours) conservé.
 - Réponse retenue : les 6 emprunts rendus de MB-202 sont masqués mais pas effacés ; l'effacement réel est impossible via l'API exposée — à signaler au demandeur. 1 tentative, résultat de l'agent faux.
+
+### Mission 5
+- Ce qui clochait :
+  - L'absence d'e-mail a deux formes non documentées : "email": null (10 adhérents) et champ email absent (5 adhérents). L'agent les a fusionnées en "e-mail manquant", alors que l'énoncé demande de distinguer les cas ; même dans sa vérification, son tableau affiche None pour les deux.
+  - Critère ajouté par l'agent : inactif = non joignable (MB-219 a pourtant un e-mail).
+  - Adresses partagées : yanis.robin@ (MB-200 et MB-237, tous deux relancés), sarah.perrin@ (MB-224, MB-239), lea.perrin@ (MB-215, MB-240).
+  - Vérifié : list_members et get_member concordants, 46 adhérents.
+- Réponse retenue : 20 joignables ; 9 non joignables = 5 email null, 3 champ email absent, 1 inactif avec e-mail — 1 tentative + 1 vérification.
