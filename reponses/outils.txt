@@ -1,0 +1,40 @@
+Outils du serveur MCP bibliotheque
+==================================
+
+1. bibliotheque_count_books
+   Returns the size of the catalogue.
+
+2. bibliotheque_create_loan
+   Registers a new loan for a member.
+
+3. bibliotheque_delete_loan
+   Deletes a loan from the register.
+
+4. bibliotheque_get_book
+   Returns one book of the catalogue.
+
+5. bibliotheque_get_member
+   Returns one member record.
+
+6. bibliotheque_get_member_fees
+   Returns what a member currently owes.
+
+7. bibliotheque_get_mission
+   Returns the full brief of one mission.
+
+8. bibliotheque_list_books
+   Lists the library catalogue. Archived copies (withdrawn from circulation) are excluded unless `include_archived` is true.
+
+9. bibliotheque_list_loans
+   Lists the loans in registration order (by loan_id).
+
+10. bibliotheque_list_members
+    Lists the library members.
+
+11. bibliotheque_list_missions
+    Lists the missions assigned to the student.
+
+12. bibliotheque_search_books
+    Full-text search over titles and authors.
+
+Total : 12 outils.
