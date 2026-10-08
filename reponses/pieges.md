@@ -21,3 +21,9 @@
 
 ## Non-pièges (documentés, ne pas signaler)
 - list_books exclut les archivés par défaut : écrit dans sa description.
+
+## create_loan — champ obligatoire non documenté (CONFIRMÉ)
+- Observé : appel avec member_id + book_id (conforme au schéma) → {"ok": false, "error": "missing field"}.
+- Réalité : le serveur exige desk_code, absent du schéma ; l'erreur ne nomme pas le champ.
+- Règle : toujours fournir desk_code (A1, B2 ou C3 observés).
+- Preuve : reponses/mission-3.md, appels 1 et 2 + schéma.

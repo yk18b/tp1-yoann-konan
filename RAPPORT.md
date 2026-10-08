@@ -21,7 +21,26 @@
 #### Mission 2 — Le retardataire
 - Énoncé : Identifie l'emprunt le plus en retard actuellement : quel adhérent, quel ouvrage, et combien de jours de retard exactement. Donne aussi le montant dû par cet adhérent.
 - Appels passés par l'agent : list_loans {status: "open", limit: 50} sur 3 pages ; get_member MB-225 ; get_book BK-1075 ; get_member_fees MB-225, MB-200, MB-227.
-- Réponse brute : voir reponses/mission-2.md (get_member_fees MB-225 : overdue_duration 4296, late_fee_per_day 15, balance_due 26.85).
+- Réponse brute : voir reponses/mission-2.md, reponses/mission-2-verification.md et reponses/mission-2-verification-archives.md.
 - Conclusion de l'agent : LN-5106, MB-225 Paul Blanc, BK-1075, 179 jours, 26,85.
-- Ce qui clochait (à confirmer) : filtre status=open peut exclure des emprunts non rendus ; unités devinées (overdue_duration en heures ? late_fee_per_day en centimes, balance_due en euros) ; date de référence du serveur = 6 octobre au lieu de la date réelle ; formats de dates mélangés.
-- Réponse retenue : en attente de vérification.
+- Ce qui clochait :
+  - get_member_fees ne documente ni l'unité de overdue_duration (heures), ni celle de late_fee_per_day (centimes) face à balance_due (euros), ni la date de référence (le serveur calcule au 2026-10-06 09:00).
+  - L'agent a affirmé que list_loans excluait les archivés par défaut ; test avec include_archived=true : 0 emprunt archivé, l'explication était inventée.
+  - Vérifié : pas d'emprunt non rendu caché (84 returned + 53 open = 137 ; 53 returned_at null).
+- Réponse retenue : LN-5106, MB-225 Paul Blanc, BK-1075 « Le Retour des autres », 179 jours de retard selon le serveur, 26,85 € dus — 1 tentative + 2 vérifications.
+
+### Mission 3
+- Ce qui clochait :
+  - create_loan : appel conforme au schéma refusé avec "missing field" ; desk_code requis mais absent du schéma ; l'agent a deviné le champ et inventé la valeur "A1".
+  - La date de début de l'emprunt est le 2026-10-06, pas la date réelle (même date de référence figée qu'en M2).
+  - L'agent appelle "fiche" le résultat de list_loans sans avoir appelé get_member ; sa "vérification par un autre chemin" répète le même appel.
+  - Vérifié : get_member renvoie la fiche sans emprunts, list_loans(member_id) est le seul moyen de vérifier ; MB-214 est actif ; total 137 → 138.
+- Réponse retenue : emprunt LN-5137 (MB-214, BK-1042, échéance 2026-10-27) — 2 tentatives (1 échec "missing field").
+
+### Mission 4
+- Ce qui clochait :
+  - delete_loan répond {"ok": true, "deleted": true} mais n'efface rien : les 6 emprunts passent en archived: true et ne sont que masqués par défaut dans list_loans.
+  - La description annonce « Deletes a loan from the register » : écart avec le comportement réel.
+  - L'agent a prouvé la disparition avec un list_loans sans include_archived, puis, après découverte de l'archivage, a quand même conclu à une mission réussie.
+  - Sélection correcte : seuls les 6 emprunts rendus ont été traités, LN-5060 (en cours) conservé.
+- Réponse retenue : les 6 emprunts rendus de MB-202 sont masqués mais pas effacés ; l'effacement réel est impossible via l'API exposée — à signaler au demandeur. 1 tentative, résultat de l'agent faux.
