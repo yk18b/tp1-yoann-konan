@@ -49,6 +49,13 @@ Chaque entrée : outil concerné, ce qu'on observe, ce que fait réellement le s
 - **Règle** : suivre `next` jusqu'à obtenir une page avec `items` vide ; ne pas s'arrêter à la première page, ne pas attendre un `next` absent.
 - **Preuve** : `reponses/mission-1.md` (appel 6 : `items: []`, `next: "MjUw"`), `reponses/mission-5-verification.md` (section 3, page 4).
 
+### 7. `limit` plafonné silencieusement à 50
+- **Outils** : `bibliotheque_list_loans` (et probablement les autres outils paginés).
+- **Observé** : un appel avec `limit: 100` renvoie 50 éléments et un `next`.
+- **Réalité serveur** : le serveur plafonne la taille de page à 50 sans erreur ni avertissement ; le schéma n'indique aucun maximum.
+- **Règle** : ne jamais supposer qu'une page contient `limit` éléments ; toujours suivre `next` jusqu'à une page vide, quel que soit le `limit` demandé.
+- **Preuve** : `reponses/apres-skill/mission-2.md`, appels 2 à 5 (`limit: 100` → pages de 50, 50, 38, puis vide).
+
 ---
 
 ## Non-pièges (comportement documenté — ne pas signaler)
@@ -66,3 +73,5 @@ Chaque entrée : outil concerné, ce qu'on observe, ce que fait réellement le s
 - **Adresses e-mail partagées** entre adhérents : `yanis.robin@example.org` (MB-200 et MB-237, tous deux en retard), `sarah.perrin@example.org` (MB-224 et MB-239), `lea.perrin@example.org` (MB-215 et MB-240).
 - **Formats de dates mélangés** : timestamps Unix pour les emprunts, ISO 8601 pour les livres, `JJ/MM/AAAA` pour `joined_at` des adhérents.
 - **Curseur « opaque » lisible** : `next` est simplement l'offset encodé en base64 (`NTA=` → 50, `MjA=` → 20).
+
+

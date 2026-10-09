@@ -15,6 +15,7 @@ Serveur MCP d'une bibliothèque municipale. Les outils sont exposés par OpenCod
 4. **Utiliser la date de référence du serveur pour les retards.** Les échéances (`due_at`) et les frais se calculent par rapport à une date de référence interne au serveur, **différente de l'horloge locale**. La recalculer au besoin avec `get_member_fees` sur un adhérent dont on connaît l'échéance (voir piège 4). Ne jamais conclure un nombre de jours de retard à partir de l'horloge locale seule.
 5. **Respecter les noms de paramètres de chaque outil.** Le nommage n'est pas uniforme (`memberId` vs `member_id`) : se fier au schéma de l'outil concerné (voir « Comportements normaux »).
 6. **Rapporter les faits, pas les intentions.** Écrire les appels exacts (outil + paramètres) et la réponse brute dans les comptes rendus, puis en tirer la conclusion.
+7. **Recopier les réponses brutes en entier dans les comptes rendus, sans en retirer de champs.**
 
 ## Pièges confirmés
 
@@ -22,7 +23,7 @@ Chaque piège : outil concerné, ce qu'on observe, ce que fait réellement le se
 
 ### 1. `delete_loan` — la suppression n'efface rien (suppression logique)
 - **Outil** : `bibliotheque_delete_loan`.
-- **Observé** : chaque appel répond `{"ok": true, "deleted": true, "loan_id": "..."}` et l'emprunt disparaît de `list_loans` (vue par défaut).
+- **Observé** : chaque appel répond `{"ok": true, "deleted": true, "loan_id": "..."}` et l'emprunt disparaît de `list_loans` (vue par défaut). Rappeler `delete_loan` sur un emprunt déjà archivé renvoie aussi `deleted: true`.
 - **Réalité serveur** : l'emprunt n'est pas effacé, il est passé à `archived: true`. Avec `list_loans` + `include_archived: true`, les emprunts « supprimés » réapparaissent (ils restent dans le registre).
 - **Règle** : ne jamais considérer `deleted: true` comme preuve d'effacement. Après toute suppression, revérifier avec `list_loans` en passant `include_archived: true`. Signaler au demandeur qu'un effacement définitif n'est pas possible via l'API exposée.
 
@@ -30,7 +31,7 @@ Chaque piège : outil concerné, ce qu'on observe, ce que fait réellement le se
 - **Outil** : `bibliotheque_create_loan`.
 - **Observé** : un appel conforme au schéma (`member_id` + `book_id`, seuls champs listés et requis) échoue avec `{"ok": false, "error": "missing field"}`, sans nommer le champ manquant.
 - **Réalité serveur** : le serveur exige aussi `desk_code`, qui n'apparaît ni dans le schéma ni dans la description. C'est le seul champ qui manque pour que la création aboutisse.
-- **Règle** : toujours fournir `desk_code` à `create_loan` (valeurs observées dans le registre : `A1`, `B2`, `C3`). Si un `create_loan` renvoie `missing field`, suspecter d'abord ce champ. Vérifier ensuite la création (méthode §3).
+- **Règle** : Ne jamais appeler `create_loan` sans `desk_code` : l'échec est certain et déjà démontré. Valeurs observées : `A1`, `B2`, `C3`.
 
 ### 3. `get_member_fees` — unités implicites
 - **Outil** : `bibliotheque_get_member_fees`.
@@ -56,6 +57,12 @@ Chaque piège : outil concerné, ce qu'on observe, ce que fait réellement le se
 - **Réalité serveur** : le serveur fournit toujours un curseur `next`, même sans données restantes ; `start_key` est décrit comme opaque sans indiquer la fin.
 - **Règle** : boucler tant que `items` n'est pas vide ; s'arrêter sur la page `items: []`, jamais sur un `next` absent. Ne pas conclure qu'une liste est complète à la première page.
 
+### 7. `limit` plafonné silencieusement à 50
+- **Outils** : tout outil paginé acceptant `limit` (`bibliotheque_list_books`, `bibliotheque_list_loans`, `bibliotheque_list_members`).
+- **Observé** : un appel avec `limit: 100` renvoie **au plus 50 éléments** et un `next`, **sans erreur** ; le schéma n'indique aucun maximum.
+- **Réalité serveur** : la taille d'une page est plafonnée silencieusement à 50.
+- **Règle** : ne jamais supposer qu'une page contient `limit` éléments ; toujours suivre `next` jusqu'à une page vide.
+
 ## Comportements normaux (documentés — ce ne sont PAS des anomalies)
 
 - **`list_books`** — description du serveur, mot pour mot : « Lists the library catalogue. Archived copies (withdrawn from circulation) are excluded unless `include_archived` is true. »
@@ -77,7 +84,3 @@ Certaines consignes sont ambiguës et aucune réponse n'est unique. Toujours exp
 - **Adresses e-mail partagées** entre plusieurs adhérents (plusieurs identifiants peuvent pointer vers une même adresse).
 - **Formats de dates mélangés** : timestamps Unix pour les emprunts, ISO 8601 pour les livres, `JJ/MM/AAAA` pour la date d'inscription des adhérents.
 - **Curseur `next` « opaque » mais lisible** : c'est l'offset encodé en base64 (`NTA=` → 50, `MjA=` → 20), utile pour comprendre la pagination sans en dépendre.
-
-## Preuves
-
-Ces règles sont tirées des appels et réponses brutes consignés dans `reponses/pieges.md` et dans les comptes rendus `reponses/mission-*.md` (création/suppression d'emprunts, pagination, unités de frais, e-mails). Les valeurs citées entre parenthèses sont des exemples d'illustration : les données peuvent évoluer, ce sont les règles qui sont stables.
